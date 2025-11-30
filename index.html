@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TribalHeritage | Extended Version</title>
+    <style>
+        /* --- CSS VARIABLES --- */
+        :root {
+            --primary: #8D4E2F;    /* Terracotta */
+            --secondary: #F5E6CA;  /* Cream */
+            --accent: #2C5F2D;     /* Forest Green */
+            --bg-body: #F5E6CA;
+            --bg-card: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --font: 'Segoe UI', sans-serif;
+            --shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --primary: #D4AF37; --secondary: #1a1a1a; --accent: #4CAF50;
+            --bg-body: #121212; --bg-card: #1E1E1E; --text-main: #e0e0e0; --text-muted: #aaaaaa;
+            --shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; transition: background 0.3s, color 0.3s; }
+        body { font-family: var(--font); background: var(--bg-body); color: var(--text-main); }
+
+        /* NAV */
+        nav { background: var(--primary); padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; box-shadow:0 2px 5px rgba(0,0,0,0.2); }
+        .logo { color: var(--bg-card); font-weight:bold; font-size:1.4rem; text-transform:uppercase; letter-spacing:1px; }
+        .nav-items { display: flex; align-items: center; gap: 10px; }
+        .nav-items button { cursor:pointer; padding:8px 15px; border-radius:4px; border:none; font-weight:bold; }
+        .btn-main { background: var(--accent); color: white; }
+        .btn-danger { background: #c0392b; color: white; }
+        .btn-icon { background: transparent; color: white; font-size: 1.2rem; padding: 5px; }
+
+        /* LAYOUT */
+        .container { padding: 2rem 5%; min-height:80vh; display:none; }
+        .container.active { display:block; animation: fadeEffect 0.5s; }
+        @keyframes fadeEffect { from {opacity:0;} to {opacity:1;} }
+
+        h1 { color: var(--primary); margin-bottom:1rem; border-bottom:2px solid var(--primary); display:inline-block; }
+        
+        /* GRID & CARDS */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top:20px; }
+        .card { background: var(--bg-card); padding:1.5rem; border-radius:8px; box-shadow: var(--shadow); transition:0.3s; position:relative; }
+        .card:hover { transform: translateY(-3px); }
+        .card-img { height:200px; background:#444; margin-bottom:1rem; display:flex; align-items:center; justify-content:center; border-radius:4px; overflow:hidden; cursor: pointer; }
+        .card-img img { width:100%; height:100%; object-fit:cover; transition: transform 0.3s; }
+        .card-img:hover img { transform: scale(1.1); }
+        
+        .status-badge { position:absolute; top:10px; right:10px; padding:4px 10px; font-size:0.8rem; border-radius:20px; color:white; font-weight:bold; z-index: 10; }
+        .status-pending { background: #e67e22; }
+        .status-approved { background: var(--accent); }
+        .heart-btn { position: absolute; top: 10px; right: 10px; font-size: 1.5rem; color: white; cursor: pointer; text-shadow: 0 0 3px black; z-index: 5; }
+        .heart-btn.liked { color: #e74c3c; }
+
+        /* BUTTONS */
+        .action-btn { background: var(--text-main); color: var(--bg-card); border:none; padding:10px; width:100%; margin-top:10px; cursor:pointer; border-radius:4px; }
+        .action-btn:hover { background: var(--primary); color: white; }
+        input, textarea { width:100%; padding:10px; margin:5px 0 15px 0; border:1px solid #ccc; border-radius:4px; background: var(--bg-card); color: var(--text-main); }
+
+        /* MODALS */
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:200; align-items:center; justify-content:center; }
+        .modal-box { background:var(--bg-card); color: var(--text-main); padding:2rem; border-radius:8px; width:90%; max-width:500px; text-align:center; position:relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .close { position:absolute; top:10px; right:15px; font-size:1.5rem; cursor:pointer; }
+        
+        /* AUTH EXTRAS */
+        #signup-extras { display: none; border-top: 1px dashed var(--text-muted); padding-top: 10px; margin-top: 10px; }
+        .auth-toggle { margin-top: 15px; font-size: 0.9rem; cursor: pointer; color: var(--primary); text-decoration: underline; }
+
+        /* CHART & ROLE */
+        .chart-container { display: flex; align-items: flex-end; gap: 15px; height: 200px; border-bottom: 2px solid var(--text-muted); padding-bottom: 5px; margin-top: 20px; }
+        .bar { width: 40px; background: var(--primary); text-align: center; color: white; border-radius: 4px 4px 0 0; position: relative; }
+        .bar span { position: absolute; bottom: -25px; width: 100%; left: 0; color: var(--text-main); font-size: 0.7rem; }
+        .role-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:15px 0; }
+        .role-opt { border:2px solid var(--primary); padding:10px; cursor:pointer; font-weight:bold; border-radius:4px; }
+        .role-opt.active { background: var(--primary); color:var(--bg-card); }
+        
+        /* ZOOM & MISC */
+        #zoom-modal .modal-box { max-width: 800px; display: flex; text-align: left; padding: 0; overflow: hidden; }
+        .zoom-img { width: 50%; height: 400px; object-fit: cover; }
+        .zoom-details { width: 50%; padding: 2rem; display: flex; flex-direction: column; justify-content: center; }
+        .search-container { margin-bottom: 20px; display: flex; gap: 10px; }
+        .search-input { padding: 12px; width: 100%; max-width: 400px; border: 2px solid var(--primary); border-radius: 30px; outline: none; font-size: 1rem; background: var(--bg-card); color: var(--text-main); }
+        .pay-row { display: flex; gap: 10px; }
+
+        @media (max-width: 768px) { #zoom-modal .modal-box { flex-direction: column; } .zoom-img { width: 100%; height: 250px; } .zoom-details { width: 100%; } }
+
+    </style>
+</head>
+<body onload="init()">
+
+    <nav>
+        <div class="logo">TribalHeritage</div>
+        <div class="nav-items">
+            <button class="btn-icon" onclick="toggleTheme()">🌓</button>
+            <span id="welcome-msg" style="color:white; font-weight:bold; display:none;"></span>
+            <button id="wishlist-btn" class="btn-icon" onclick="openWishlist()" style="display:none;">❤️</button>
+            <button id="cart-btn" class="btn-main" onclick="openCart()" style="display:none;">Cart (0)</button>
+            <button id="login-btn" class="btn-main" onclick="openModal('auth-modal')">Login</button>
+            <button id="logout-btn" class="btn-danger" onclick="logout()" style="display:none;">Logout</button>
+        </div>
+    </nav>
+
+    <div id="view-landing" class="container active">
+        <div style="text-align:center; padding-top:10vh;">
+            <h1 style="font-size:3.5rem; border:none; color:var(--primary); text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">Handmade with Soul</h1>
+            <p style="font-size:1.3rem; margin-bottom:2rem; color:var(--text-muted);">Empowering Artisans. Delighting Customers.</p>
+            <button class="action-btn" style="width:200px; font-size:1.2rem; background:var(--primary); color:white;" onclick="openModal('auth-modal')">Start Journey</button>
+        </div>
+    </div>
+
+    <div id="view-admin" class="container">
+        <h1>Admin Analytics</h1>
+        <h3 style="margin-top:20px;">Sales Performance</h3>
+        <div class="chart-container">
+            <div class="bar" style="height: 60%;"><span>Warli</span></div>
+            <div class="bar" style="height: 85%;"><span>Gond</span></div>
+            <div class="bar" style="height: 40%;"><span>Bastar</span></div>
+            <div class="bar" style="height: 70%;"><span>Odisha</span></div>
+        </div>
+        <h3 style="margin-top:40px; color:#e67e22;">⚠️ Pending Approvals</h3>
+        <div id="admin-pending-grid" class="grid"></div>
+        <h3 style="margin-top:40px;">Live Stats</h3>
+        <div class="grid">
+            <div class="card"><h3>Artisans</h3><p>25</p></div>
+            <div class="card"><h3>Revenue</h3><p>₹ 1,45,000</p></div>
+            <div class="card"><h3>Products</h3><p id="live-count">0</p></div>
+        </div>
+    </div>
+
+    <div id="view-artisan" class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>My Craft Studio</h1>
+            <button class="btn-main" onclick="openModal('upload-modal')">+ Upload Item</button>
+        </div>
+        <div class="grid" style="margin-bottom:30px;">
+             <div class="card" style="border-left:5px solid var(--accent);"><h3>Total Earnings</h3><p>₹ 12,400</p></div>
+             <div class="card" style="border-left:5px solid orange;"><h3>Pending Items</h3><p>Wait for Admin approval</p></div>
+        </div>
+        <h3>My Portfolio</h3>
+        <div id="artisan-prod-grid" class="grid"></div>
+        <h3 style="margin-top:40px;">Consultant Tips</h3>
+        <div id="artisan-tips-grid" class="grid"></div>
+    </div>
+
+    <div id="view-customer" class="container">
+        <h1>Authentic Tribal Shop</h1>
+        <div class="search-container">
+            <input type="text" id="search-bar" class="search-input" placeholder="🔍 Search..." onkeyup="filterProducts()">
+        </div>
+        <div id="shop-grid" class="grid"></div>
+    </div>
+    
+    <div id="view-wishlist" class="container">
+        <h1>My Wishlist ❤️</h1>
+        <button class="action-btn" style="width:150px; margin-bottom:20px;" onclick="switchView('view-customer')">← Back to Shop</button>
+        <div id="wishlist-grid" class="grid"></div>
+    </div>
+
+    <div id="view-consultant" class="container">
+        <h1>Consultant Hub</h1>
+        <div class="card" style="max-width:600px;">
+            <h3>Post a New Tip</h3>
+            <input type="text" id="tip-title" placeholder="Tip Title">
+            <textarea id="tip-content" placeholder="Advice..." style="height:100px;"></textarea>
+            <button class="action-btn" onclick="postTip()">Publish</button>
+        </div>
+    </div>
+
+    <div id="auth-modal" class="modal">
+        <div class="modal-box">
+            <span class="close" onclick="closeModal('auth-modal')">&times;</span>
+            <h2 id="auth-title" style="color:var(--primary);">Login</h2>
+            
+            <p style="margin-bottom:5px;">Select Role:</p>
+            <div class="role-grid">
+                <div class="role-opt" onclick="setRole('Artisan', this)">Artisan</div>
+                <div class="role-opt" onclick="setRole('Customer', this)">Customer</div>
+                <div class="role-opt" onclick="setRole('Consultant', this)">Consultant</div>
+                <div class="role-opt" onclick="setRole('Admin', this)">Admin</div>
+            </div>
+            
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            
+            <div id="signup-extras">
+                <input type="email" id="email" placeholder="Email Address">
+                <input type="tel" id="phone" placeholder="Phone Number">
+            </div>
+
+            <button id="auth-btn" class="action-btn" style="background:var(--accent); color:white;" onclick="performAuth()">Login</button>
+            <p class="auth-toggle" onclick="toggleAuthMode()">New User? Create Account</p>
+        </div>
+    </div>
+
+    <div id="upload-modal" class="modal">
+        <div class="modal-box">
+            <span class="close" onclick="closeModal('upload-modal')">&times;</span>
+            <h2>Upload Product</h2>
+            <input type="text" id="p-name" placeholder="Name">
+            <input type="number" id="p-price" placeholder="Price">
+            <input type="text" id="p-desc" placeholder="Description">
+            <p style="font-size:0.8rem; color:red;">*Image upload disabled in demo</p>
+            <button class="action-btn" onclick="uploadProduct()">Submit</button>
+        </div>
+    </div>
+
+    <div id="cart-modal" class="modal">
+        <div class="modal-box" style="max-width:600px;">
+            <span class="close" onclick="closeModal('cart-modal')">&times;</span>
+            <h2>Cart</h2>
+            <div id="cart-items-area" style="max-height:300px; overflow-y:auto;"></div>
+            <h3 style="margin-top:20px; text-align:right;">Total: ₹ <span id="cart-total">0</span></h3>
+            <button class="action-btn" style="background:var(--accent); color:white;" onclick="openPayment()">Checkout</button>
+        </div>
+    </div>
+
+    <div id="payment-modal" class="modal">
+        <div class="modal-box" style="text-align:left;">
+            <span class="close" onclick="closeModal('payment-modal')">&times;</span>
+            <h2>Checkout</h2>
+            <label>Address</label><input type="text" placeholder="Full Address">
+            <label>Card</label><input type="text" placeholder="XXXX-XXXX-XXXX-XXXX">
+            <div class="pay-row"><input type="text" placeholder="MM/YY"><input type="text" placeholder="CVV"></div>
+            <h3 style="text-align:center; margin:15px 0;">Total: ₹ <span id="pay-amount">0</span></h3>
+            <button class="action-btn" style="background:var(--accent); color:white;" onclick="processPayment()">Pay Now</button>
+        </div>
+    </div>
+
+    <div id="zoom-modal" class="modal">
+        <div class="modal-box">
+            <span class="close" onclick="closeModal('zoom-modal')" style="background:white; border-radius:50%; padding:0 10px; color:black;">&times;</span>
+            <img id="zoom-img-src" src="" class="zoom-img">
+            <div class="zoom-details">
+                <h2 id="zoom-title" style="color:var(--primary);">Title</h2>
+                <h4 id="zoom-artist">Artist</h4>
+                <p id="zoom-desc">Desc</p>
+                <h2 id="zoom-price" style="color:var(--accent);">₹ 0</h2>
+                <button class="action-btn" onclick="closeModal('zoom-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db = {
+            products: [
+                { id:1, name:"Warli Canvas Art", price:1200, artist:"Rakesh", status:"approved", desc:"Hand painted canvas using rice flour paste.", img: "warli.jpeg" },
+                { id:3, name:"Bamboo Table Lamp", price:1500, artist:"Sita Devi", status:"approved", desc:"Sustainable bamboo lamp with intricate weave.", img: "bamboo-lamp.jpeg" },
+                { id:4, name:"Dokra Elephant", price:2200, artist:"Bastar Arts", status:"approved", desc:"Traditional brass metal casting.", img: "dokra-elephant.jpeg" },
+                { id:5, name:"Pattachitra Bookmark", price:200, artist:"Odisha Crafts", status:"approved", desc:"Hand painted palm leaf bookmarks.", img: "pattachitra.jpeg" },
+                { id:7, name:"Jute Shopping Bag", price:450, artist:"Meena", status:"approved", desc:"Eco-friendly bag with tribal patterns.", img: "jute-bag.jpeg" },
+                { id:2, name:"Clay Horse Pair", price:850, artist:"Amit", status:"pending", desc:"Bankura style terracotta horses.", img: "clay-horse.jpeg" },
+                { id:6, name:"Tribal Face Mask", price:1800, artist:"Amit", status:"pending", desc:"Wooden carved mask for wall decor.", img: "tribal-mask.jpeg" },
+                { id:8, name:"Black Pottery Vase", price:900, artist:"Manipur Arts", status:"pending", desc:"Longpi black pottery, stone polished.", img: "black-pottery.jpeg" }
+            ],
+            tips: [ { id:1, title:"Pricing Strategy", content:"Remember to include cost of materials + 20% margin." } ],
+            cart: [],
+            wishlist: [],
+            users: [
+                { name: "Admin", pass: "123", role: "Admin", email: "admin@tribal.com", phone: "9999999999" } 
+            ]
+        };
+        
+        let currentUser = { role: null, name: null };
+        let isRegisterMode = false;
+
+        function toggleTheme() {
+            let body = document.body;
+            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? '' : 'dark');
+        }
+
+        // --- AUTH LOGIC ---
+        function setRole(role, btn) {
+            currentUser.role = role;
+            document.querySelectorAll('.role-opt').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('auth-title').innerText = isRegisterMode ? "Create Account" : "Login";
+            document.getElementById('auth-btn').innerText = isRegisterMode ? "Sign Up" : "Login";
+            document.querySelector('.auth-toggle').innerText = isRegisterMode ? "Have an account? Login" : "New User? Create Account";
+            
+            // SHOW/HIDE EXTRA FIELDS
+            document.getElementById('signup-extras').style.display = isRegisterMode ? "block" : "none";
+        }
+
+        function performAuth() {
+            let name = document.getElementById('username').value;
+            let pass = document.getElementById('password').value;
+            
+            if(!currentUser.role || !name || !pass) return alert("Please fill Role, Username and Password!");
+
+            if (isRegisterMode) {
+                // REGISTRATION
+                let email = document.getElementById('email').value;
+                let phone = document.getElementById('phone').value;
+                if(!email || !phone) return alert("Please fill Email and Phone for Registration.");
+
+                let exists = db.users.find(u => u.name === name && u.role === currentUser.role);
+                if(exists) return alert("User already exists!");
+
+                db.users.push({ name: name, pass: pass, role: currentUser.role, email: email, phone: phone });
+                alert("Account Created! You are now logged in.");
+                finalizeLogin(name);
+
+            } else {
+                // LOGIN
+                // For demo simplicity, we allow login without strict password check unless you want it.
+                // let userRecord = db.users.find(u => u.name === name && u.role === currentUser.role);
+                // if (!userRecord) return alert("User not found. Please Register.");
+                
+                finalizeLogin(name);
+            }
+        }
+
+        function finalizeLogin(name) {
+            currentUser.name = name;
+            closeModal('auth-modal');
+            document.getElementById('login-btn').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'inline-block';
+            document.getElementById('welcome-msg').style.display = 'inline-block';
+            document.getElementById('welcome-msg').innerText = `Hello, ${name}`;
+
+            if(currentUser.role === 'Customer') {
+                document.getElementById('cart-btn').style.display = 'inline-block';
+                document.getElementById('wishlist-btn').style.display = 'inline-block';
+            }
+            renderViews();
+        }
+
+        function logout() { location.reload(); }
+
+        function switchView(id) {
+            document.querySelectorAll('.container').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        function renderViews() {
+            if(currentUser.role === 'Admin') { switchView('view-admin'); renderAdmin(); } 
+            else if (currentUser.role === 'Artisan') { switchView('view-artisan'); renderArtisan(); } 
+            else if (currentUser.role === 'Customer') { switchView('view-customer'); renderCustomer(); } 
+            else if (currentUser.role === 'Consultant') { switchView('view-consultant'); }
+        }
+
+        // --- ARTISAN ---
+        function renderArtisan() {
+            const grid = document.getElementById('artisan-prod-grid'); grid.innerHTML = '';
+            db.products.forEach(p => {
+                let badge = p.status === 'approved' ? 'status-approved' : 'status-pending';
+                let img = p.img ? p.img : "https://via.placeholder.com/250x180";
+                grid.innerHTML += `<div class="card"><span class="status-badge ${badge}">${p.status}</span><div class="card-img" onclick="openZoom(${p.id})"><img src="${img}"></div><h4>${p.name}</h4><p>₹ ${p.price}</p></div>`;
+            });
+        }
+        function uploadProduct() { alert("Simulated Upload."); closeModal('upload-modal'); }
+
+        // --- ADMIN ---
+        function renderAdmin() {
+            const grid = document.getElementById('admin-pending-grid'); grid.innerHTML = '';
+            let pending = db.products.filter(p => p.status === 'pending');
+            document.getElementById('live-count').innerText = db.products.filter(p => p.status === 'approved').length;
+            if(pending.length === 0) grid.innerHTML = "<p>No pending approvals.</p>";
+            pending.forEach(p => {
+                let img = p.img ? p.img : "https://via.placeholder.com/250x180";
+                grid.innerHTML += `<div class="card" style="border:1px solid orange;"><div class="card-img" style="height:100px;"><img src="${img}"></div><h4>${p.name}</h4><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><button class="action-btn" style="background:green; color:white; margin:0;" onclick="approve(${p.id})">Approve</button><button class="action-btn" style="background:red; color:white; margin:0;" onclick="reject(${p.id})">Reject</button></div></div>`;
+            });
+        }
+        function approve(id) { db.products.find(p => p.id === id).status = 'approved'; renderAdmin(); }
+        function reject(id) { alert("Rejected"); renderAdmin(); }
+
+        // --- CUSTOMER ---
+        function renderCustomer(list) {
+            const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
+            let items = list || db.products.filter(p => p.status === 'approved');
+            items.forEach(p => {
+                let img = p.img ? p.img : "https://via.placeholder.com/250x180";
+                let liked = db.wishlist.includes(p.id) ? 'liked' : '';
+                grid.innerHTML += `<div class="card"><span class="heart-btn ${liked}" onclick="toggleWish(${p.id}, this)">♥</span><div class="card-img" onclick="openZoom(${p.id})"><img src="${img}"></div><h4>${p.name}</h4><p style="font-size:0.9rem; color:var(--text-muted);">${p.desc}</p><div style="display:flex; justify-content:space-between; margin-top:15px; align-items:center;"><span style="font-weight:bold; font-size:1.1rem; color:var(--primary);">₹ ${p.price}</span><button class="action-btn" style="width:auto; margin:0;" onclick="addCart(${p.id})">Add to Cart</button></div></div>`;
+            });
+        }
+        function toggleWish(id, btn) {
+            if(db.wishlist.includes(id)) { db.wishlist = db.wishlist.filter(x => x!==id); btn.classList.remove('liked'); }
+            else { db.wishlist.push(id); btn.classList.add('liked'); }
+        }
+        function openWishlist() {
+            switchView('view-wishlist');
+            const grid = document.getElementById('wishlist-grid'); grid.innerHTML = '';
+            db.wishlist.forEach(id => {
+                let p = db.products.find(x => x.id === id);
+                let img = p.img ? p.img : "https://via.placeholder.com/250x180";
+                grid.innerHTML += `<div class="card"><div class="card-img"><img src="${img}"></div><h4>${p.name}</h4><button class="action-btn" onclick="addCart(${p.id})">Add Cart</button></div>`;
+            });
+        }
+        function filterProducts() {
+            let q = document.getElementById('search-bar').value.toLowerCase();
+            renderCustomer(db.products.filter(p => p.status === 'approved' && (p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q))));
+        }
+        function openZoom(id) {
+            let p = db.products.find(x => x.id === id);
+            let img = p.img ? p.img : "https://via.placeholder.com/250x180";
+            document.getElementById('zoom-img-src').src = img; document.getElementById('zoom-title').innerText = p.name;
+            document.getElementById('zoom-artist').innerText = "By "+p.artist; document.getElementById('zoom-desc').innerText = p.desc;
+            document.getElementById('zoom-price').innerText = "₹ "+p.price; openModal('zoom-modal');
+        }
+
+        // --- SHOP ---
+        function addCart(id) { db.cart.push(db.products.find(x => x.id === id)); document.getElementById('cart-btn').innerText = `Cart (${db.cart.length})`; alert("Added"); }
+        function openCart() { openModal('cart-modal'); document.getElementById('cart-items-area').innerHTML = db.cart.map(i => `<p>${i.name} - ₹${i.price}</p>`).join(''); let sum = db.cart.reduce((a,b)=>a+b.price,0); document.getElementById('cart-total').innerText = sum; document.getElementById('pay-amount').innerText = sum; }
+        function openPayment() { if(db.cart.length===0) return alert("Empty"); closeModal('cart-modal'); openModal('payment-modal'); }
+        function processPayment() { alert("Success!"); db.cart=[]; closeModal('payment-modal'); document.getElementById('cart-btn').innerText="Cart (0)"; }
+        function postTip() { alert("Published!"); }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function init() { console.log("System Loaded"); }
+
+    </script>
+</body>
+</html>
